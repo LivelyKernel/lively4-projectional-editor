@@ -1,1 +1,3 @@
-# lively4-projectional-editor
+# Lively4 projectional editor
+
+This will be a projectional editor for Lively4.
