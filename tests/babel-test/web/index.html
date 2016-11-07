@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Blockly Test</title>
+	<meta charset="utf-8" />
+	<script src="jquery-3.1.1.min.js"></script>
+	<script src="blockly_compressed.js"></script>
+	<script src="blocks_compressed.js"></script>
+	<script src="msg/js/en.js"></script>
+	<script src="bundle.js"></script>
+</head>
+<body>
+	<h1>Blockly Test</h1>
+
+	<textarea rows="5" cols="80" id="input">Put your code here...</textarea>
+
+	<button id="button">Transform</button>
+
+	<div id="blocklyDiv" style="height: 480px; width: 100%;"></div>
+
+	<script>
+		const test_types = [
+			'Program',
+			'VariableDeclaration',
+			'VariableDeclarator',
+			'Identifier',
+			'NumericLiteral',
+			'StringLiteral',
+			'Literal',
+			'BinaryExpression'
+		];
+		var toolbox = '<xml>';
+
+		for(var i = 0; i < test_types.length; i++) {
+			const type = test_types[i];
+			const type_name = 'babel_' + type;
+			Blockly.Blocks[type_name] = blockDefinitionForNodeType(type);
+			toolbox += '  <block type="' + type_name + '"></block>';
+		}
+
+		toolbox += '</xml>';
+		
+		const workspace = Blockly.inject('blocklyDiv', {
+			toolbox: toolbox,
+			collapse: true,
+			scrollbars: true
+		});
+
+		$("#button").on("click", () => {
+			workspace.clear();
+			try {
+				const xml = xmlFromCode($('#input').val());
+				Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(xml), workspace);
+			} catch (e) {
+				console.log(e);
+			}
+		});
+	</script>
+</body>
+</html>
