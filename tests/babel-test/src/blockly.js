@@ -3,6 +3,10 @@ import generate from "babel-generator";
 import traverse from "babel-traverse";
 import * as t from "babel-types";
 
+import * as bt from "./blockly-tools";
+
+const TYPE_PREFIX = "babel_";
+
 const colors = {
 	Program: 0,
 	Identifier: 250,
@@ -92,18 +96,19 @@ const blockDefinitionForNodeType = (nodetype) => {
 	return blockDefinitionFromNode(t.NODE_FIELDS[nodetype], nodetype)
 }
 
-
-const xmlFromAST = (ast) => {
-	let id = 1;
-
+const createBlocksForAST = (ast, workspace) => {
 	const parse_node = (node) => {
-		let xml = '';
+		
 		const node_meta = t.NODE_FIELDS[node.type];
-
-		xml += '<block type="babel_' + node.type + '" id="' + (id++) + '">';
+		
+		let block = workspace.newBlock(TYPE_PREFIX + node.type);
+		block.babel_node = node;		
+		
+		block.initSvg();
+		block.render();
 
 		if(typeof node_meta.value !== 'undefined') {
-				xml += '<field name="value">' + node.value + '</field>';
+			block.getField("value").setValue(node.value);
 		} else {
 			// Go through the inputs
 			for(const field_name in node_meta) {
@@ -120,9 +125,7 @@ const xmlFromAST = (ast) => {
 
 					// Decide if this is a series of nodes or a limited selection of nodes
 					if(field_meta.validate.chainOf[0].type === 'array') {
-						// This is a series of nodes
-						xml += '<statement name="' + field_name + '">';
-
+	
 						let node_list = node[field_name];
 
 						if(node_list && node_list.length > 0) {
@@ -132,53 +135,41 @@ const xmlFromAST = (ast) => {
 								node_list.pop();
 							}
 
-							xml += parse_node(node_list[0]);
+							bt.setAsFirstStatement(parse_node(node_list[0]), block, field_name);
 						}
 
-						xml += '</statement>';
 					} else {
-						xml += '<field name="' + field_name + '">';
-						xml += node[field_name];
-						xml += '</field>';
+						block.getField(field_name).setValue(node[field_name]);
 					}
 					
 					//console.log(field.validate.chainOf)
 				} else if (field_meta.validate.oneOfNodeTypes) {
-					xml += '<value name="' + field_name + '">';
-					xml += parse_node(node[field_name]);
-					xml += '</value>';
+					bt.setAsInput(parse_node(node[field_name]), block, field_name)
 				} else if (field_meta.validate.type) {
-					xml += '<value name="' + field_name + '">';
-					xml += parse_node(node[field_name]);
-					xml += '</value>';
+					bt.setAsInput(parse_node(node[field_name]), block, field_name)
 				} else {
-					xml += '<field name="' + field_name + '">';
-					xml += node[field_name];
-					xml += '</field>';
+					block.getField(field_name).setValue(node[field_name]);
 				}
 			}
 		}
 
 		if(node.next) {
-			xml += '<next>' + parse_node(node.next) + '</next>';
+			bt.setAsNext(parse_node(node.next), block)
 		}
 
-		xml += '</block>';
-
-		return xml;
+		return block;
 	}
-
-	return '<xml>' + parse_node(ast.program) + '</xml>';
+	
+	return parse_node(ast.program);
 }
 
-const xmlFromCode = (code) => {
+const createBlocksForCode = (code, workspace) => {
 	const ast = babylon.parse(code);
-	return xmlFromAST(ast);
+	return createBlocksForAST(ast, workspace);
 }
-
 
 // Export functions if we are running in a browser
 if (window) {
-	window.xmlFromCode = xmlFromCode;
+	window.createBlocksForCode = createBlocksForCode;
 	window.blockDefinitionForNodeType = blockDefinitionForNodeType;
 }
