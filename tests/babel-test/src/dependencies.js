@@ -5,7 +5,7 @@ import * as types from "babel-types";
 import * as blockly from "node-blockly";
 import * as blockly_tools from "./blockly-tools";
 
-window.lpe = {
+window.lpe_lib = {
 	babylon: babylon,
 	generate: generate,
 	traverse: traverse,
