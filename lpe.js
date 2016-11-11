@@ -91,13 +91,13 @@ const blockDefinitionFromNode = (node, nodetype) => {
 }
 
 const blockDefinitionForNodeType = (nodetype) => {
-	return blockDefinitionFromNode(t.NODE_FIELDS[nodetype], nodetype)
+	return blockDefinitionFromNode(lpe_lib.types.NODE_FIELDS[nodetype], nodetype)
 }
 
 const createBlocksForAST = (ast, workspace) => {
 	const parse_node = (node) => {
 		
-		const node_meta = t.NODE_FIELDS[node.type];
+		const node_meta = lpe_lib.types.NODE_FIELDS[node.type];
 		
 		let block = workspace.newBlock(TYPE_PREFIX + node.type);
 		block.babel_node = node;		

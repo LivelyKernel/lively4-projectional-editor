@@ -1,9 +1,8 @@
-<script src="https://lively-kernel.org/lively4/lively4-projectional-editor/dependencies.js"></script>
-
 <script>
+  $.getScript("https://lively-kernel.org/lively4/lively4-projectional-editor/dependencies.js", function(){
+
   System.import('https://lively-kernel.org/lively4/lively4-projectional-editor/lpe.js').then(
     function(lpe) {
-      //lpe.transformCodeOnClick('code-source', 'ast-transform-button', 'ast-target');
 
       const test_types = [
         'Program',
@@ -20,14 +19,13 @@
       for(var i = 0; i < test_types.length; i++) {
           const type = test_types[i];
           const type_name = 'babel_' + type;
-          Blockly.Blocks[type_name] = lpe.blockDefinitionForNodeType(type);
+          lpe_lib.blockly.Blocks[type_name] = lpe.blockDefinitionForNodeType(type);
           toolbox += '  <block type="' + type_name + '"></block>';
       }
 
       toolbox += '</xml>';
       
-      let Blockly = lpe_lib.blockly;
-      const workspace = Blockly.inject('blocklyDiv', {
+      const workspace = lpe_lib.blockly.inject('blocklyDiv', {
           toolbox: toolbox,
           collapse: true,
           scrollbars: true
@@ -76,6 +74,8 @@
       });
     }
   )
+  
+  });
 </script>
 
 <!--<juicy-ace-editor id="code-source" style="width:400px"></juicy-ace-editor>
