@@ -1,7 +1,7 @@
 //System.paths['*'] = '../lively4-projectional-editor/node_modules/';
 //console.log("ASDF");
 //console.log(System.paths);
-import * as babylon from '../lively4-projectional-editor/node_modules/babylon/lib/index.js';
+//import * as babylon from '../lively4-projectional-editor/node_modules/babylon/lib/index.js';
 //import * as types from "../lively4-projectional-editor/node_modules/babel-types/lib/index.js";
 
 /*oldBaseURL = System.baseURL;
@@ -15,6 +15,10 @@ System.baseURL = oldBaseURL;
 //import traverse from "babel-traverse";
 //import * as t from "babel-types";
 //import * as bt from "./blockly-tools";
+
+import * as deps from '../lively4-projectional-editor/dependencies.js';
+console.log("DEPS");
+console.log(deps);
 
 const transformCodeOnClick = function(source_id, button_id, target_id) {
   $('#' + button_id).on('click', function() {
