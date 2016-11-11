@@ -45,16 +45,49 @@
 			collapse: true,
 			scrollbars: true
 		});
+		
+		function onChange(event) {	
+		
+		  if (event.type == Blockly.Events.MOVE) {	
+		  
+		  	 let block = workspace.getBlockById(event.blockId);
+		  	 
+		  	 if (block) {
+		  	 	updateBlockConnections(block);			  
+		  	 }	     
+		  }
+		}
+		workspace.addChangeListener(onChange);
+		
+		function updateBlockConnections(block) {
+			let prevConnected = block.previousConnection &&
+		 		block.previousConnection.isConnected();
+			 let nextConnected = block.nextConnection &&
+			 	block.nextConnection.isConnected();
+			 let outConnected = block.outputConnection &&
+		 		block.outputConnection.isConnected();
+		  		     
+			 if (prevConnected || nextConnected) {	
+			 	block.setOutput(false, null);
+			 } else if (outConnected) {
+				block.setPreviousStatement(false, null);
+					block.setNextStatement(false, null);		        
+			 } else {		   
+			 	block.setOutput(true, null);
+			 	block.setPreviousStatement(true, null);
+					block.setNextStatement(true, null);
+			 }
+		}
 
 		$("#button").on("click", () => {
 			workspace.clear();
 			try {
-				const xml = xmlFromCode($('#input').val());
-				Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(xml), workspace);
+				createBlocksForCode($('#input').val(), workspace);
 			} catch (e) {
 				console.log(e);
 			}
-		});
+		});		
+		
 	</script>
 </body>
 </html>
