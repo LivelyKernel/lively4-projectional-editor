@@ -1,12 +1,13 @@
-<!--<script>
-  System.import('../lively4-projectional-editor/babel-test.js').then(
+<script src="https://lively-kernel.org/lively4/lively4-projectional-editor/dependencies.js"></script>
+
+<script>
+  System.import('https://lively-kernel.org/lively4/lively4-projectional-editor/babel-test.js').then(
     function(test) {
+      //console.log(test);
       test.transformCodeOnClick('code-source', 'ast-transform-button', 'ast-target');
     }
   )
-</script>-->
-
-<script src="https://lively-kernel.org/lively4/lively4-projectional-editor/dependencies.js"></script>
+</script>
 
 <juicy-ace-editor id="code-source" style="width:400px"></juicy-ace-editor>
 <button id="ast-transform-button">Transform</button>
