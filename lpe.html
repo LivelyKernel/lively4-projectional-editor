@@ -1,80 +1,84 @@
 <script>
-  $.getScript("https://lively-kernel.org/lively4/lively4-projectional-editor/dependencies.js", function(){
+  $.getScript("https://lively-kernel.org/lively4/lively4-projectional-editor/babel.js", function(){
+    $.getScript("https://lively-kernel.org/lively4/lively4-projectional-editor/blockly_compressed.js", function() {
+      $.getScript("https://lively-kernel.org/lively4/lively4-projectional-editor/blockls_compressed.js", function() {
 
-  System.import('https://lively-kernel.org/lively4/lively4-projectional-editor/lpe.js').then(
-    function(lpe) {
+        System.import('https://lively-kernel.org/lively4/lively4-projectional-editor/lpe.js').then(
+          function(lpe) {
 
-      const test_types = [
-        'Program',
-        'VariableDeclaration',
-        'VariableDeclarator',
-        'Identifier',
-        'NumericLiteral',
-        'StringLiteral',
-        'Literal',
-        'BinaryExpression'
-      ];
-      var toolbox = '<xml>';
+            const test_types = [
+              'Program',
+              'VariableDeclaration',
+              'VariableDeclarator',
+              'Identifier',
+              'NumericLiteral',
+              'StringLiteral',
+              'Literal',
+              'BinaryExpression'
+            ];
+            var toolbox = '<xml>';
 
-      for(var i = 0; i < test_types.length; i++) {
-          const type = test_types[i];
-          const type_name = 'babel_' + type;
-          lpe_lib.blockly.Blocks[type_name] = lpe.blockDefinitionForNodeType(type);
-          toolbox += '  <block type="' + type_name + '"></block>';
-      }
+            for(var i = 0; i < test_types.length; i++) {
+                const type = test_types[i];
+                const type_name = 'babel_' + type;
+                Blockly.Blocks[type_name] = lpe.blockDefinitionForNodeType(type);
+                toolbox += '  <block type="' + type_name + '"></block>';
+            }
 
-      toolbox += '</xml>';
-      
-      const workspace = lpe_lib.blockly.inject('blocklyDiv', {
-          toolbox: toolbox,
-          collapse: true,
-          scrollbars: true
-      });
-      
-      function onChange(event) {  
-      
-        if (event.type == Blockly.Events.MOVE) {  
-        
-           let block = workspace.getBlockById(event.blockId);
-           
-           if (block) {
-              updateBlockConnections(block);            
-           }       
-        }
-      }
-      workspace.addChangeListener(onChange);
-      
-      function updateBlockConnections(block) {
-          let prevConnected = block.previousConnection &&
-              block.previousConnection.isConnected();
-           let nextConnected = block.nextConnection &&
-              block.nextConnection.isConnected();
-           let outConnected = block.outputConnection &&
-              block.outputConnection.isConnected();
-                   
-           if (prevConnected || nextConnected) {  
-              block.setOutput(false, null);
-           } else if (outConnected) {
-              block.setPreviousStatement(false, null);
-                  block.setNextStatement(false, null);                
-           } else {          
-              block.setOutput(true, null);
-              block.setPreviousStatement(true, null);
-                  block.setNextStatement(true, null);
-           }
-      }
+            toolbox += '</xml>';
+            
+            const workspace = Blockly.inject('blocklyDiv', {
+                toolbox: toolbox,
+                collapse: true,
+                scrollbars: true
+            });
+            
+            function onChange(event) {  
+            
+              if (event.type == Blockly.Events.MOVE) {  
+              
+                 let block = workspace.getBlockById(event.blockId);
+                 
+                 if (block) {
+                    updateBlockConnections(block);            
+                 }       
+              }
+            }
+            workspace.addChangeListener(onChange);
+            
+            function updateBlockConnections(block) {
+                let prevConnected = block.previousConnection &&
+                    block.previousConnection.isConnected();
+                 let nextConnected = block.nextConnection &&
+                    block.nextConnection.isConnected();
+                 let outConnected = block.outputConnection &&
+                    block.outputConnection.isConnected();
+                         
+                 if (prevConnected || nextConnected) {  
+                    block.setOutput(false, null);
+                 } else if (outConnected) {
+                    block.setPreviousStatement(false, null);
+                        block.setNextStatement(false, null);                
+                 } else {          
+                    block.setOutput(true, null);
+                    block.setPreviousStatement(true, null);
+                        block.setNextStatement(true, null);
+                 }
+            }
 
-      $("#button").on("click", () => {
-          workspace.clear();
-          try {
-              lpe.createBlocksForCode($('#input').val(), workspace);
-          } catch (e) {
-              console.log(e);
+            $("#button").on("click", () => {
+                workspace.clear();
+                try {
+                    lpe.createBlocksForCode($('#input').val(), workspace);
+                } catch (e) {
+                    console.log(e);
+                }
+            });
           }
-      });
-    }
-  )
+        )
   
+      });
+    });
   });
 </script>
 

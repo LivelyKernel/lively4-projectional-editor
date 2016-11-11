@@ -1,4 +1,4 @@
-import * as bt from "../lively4-projectional-editor/blockly-tools.js";
+import * as babel_tools from "../lively4-projectional-editor/blockly-tools.js";
 
 const TYPE_PREFIX = "babel_";
 
@@ -14,9 +14,6 @@ const colors = {
 const blockDefinitionFromNode = (node, nodetype) => {
 	return {
 		init: function() {
-
-			// Get a local Blockly reference
-			let Blockly = lpe_lib.blockly;
 
 			// Always add one input with the title
 			this.appendDummyInput()
@@ -91,13 +88,13 @@ const blockDefinitionFromNode = (node, nodetype) => {
 }
 
 const blockDefinitionForNodeType = (nodetype) => {
-	return blockDefinitionFromNode(lpe_lib.types.NODE_FIELDS[nodetype], nodetype)
+	return blockDefinitionFromNode(lpe_babel.types.NODE_FIELDS[nodetype], nodetype)
 }
 
 const createBlocksForAST = (ast, workspace) => {
 	const parse_node = (node) => {
 		
-		const node_meta = lpe_lib.types.NODE_FIELDS[node.type];
+		const node_meta = lpe_babel.types.NODE_FIELDS[node.type];
 		
 		let block = workspace.newBlock(TYPE_PREFIX + node.type);
 		block.babel_node = node;		
@@ -133,7 +130,7 @@ const createBlocksForAST = (ast, workspace) => {
 								node_list.pop();
 							}
 
-							bt.setAsFirstStatement(parse_node(node_list[0]), block, field_name);
+							babel_tools.setAsFirstStatement(parse_node(node_list[0]), block, field_name);
 						}
 
 					} else {
@@ -142,9 +139,9 @@ const createBlocksForAST = (ast, workspace) => {
 					
 					//console.log(field.validate.chainOf)
 				} else if (field_meta.validate.oneOfNodeTypes) {
-					bt.setAsInput(parse_node(node[field_name]), block, field_name)
+					babel_tools.setAsInput(parse_node(node[field_name]), block, field_name)
 				} else if (field_meta.validate.type) {
-					bt.setAsInput(parse_node(node[field_name]), block, field_name)
+					babel_tools.setAsInput(parse_node(node[field_name]), block, field_name)
 				} else {
 					block.getField(field_name).setValue(node[field_name]);
 				}
@@ -152,7 +149,7 @@ const createBlocksForAST = (ast, workspace) => {
 		}
 
 		if(node.next) {
-			bt.setAsNext(parse_node(node.next), block)
+			babel_tools.setAsNext(parse_node(node.next), block)
 		}
 
 		return block;
@@ -162,7 +159,7 @@ const createBlocksForAST = (ast, workspace) => {
 }
 
 const createBlocksForCode = (code, workspace) => {
-	const ast = lpe_lib.babylon.parse(code);
+	const ast = lpe_babel.babylon.parse(code);
 	return createBlocksForAST(ast, workspace);
 }
 
@@ -171,7 +168,7 @@ const transformCodeOnClick = function(source_id, button_id, target_id) {
       const code_source = $('#' + source_id);
       const target = $('#' + target_id);
       
-      const ast = lpe_lib.babylon.parse(code_source.val());
+      const ast = lpe_babel.babylon.parse(code_source.val());
       target.text(JSON.stringify(ast.program, undefined, 4));
     });
 }
