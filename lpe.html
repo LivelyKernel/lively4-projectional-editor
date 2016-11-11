@@ -1,9 +1,9 @@
 <script src="https://lively-kernel.org/lively4/lively4-projectional-editor/dependencies.js"></script>
 
 <script>
-  System.import('https://lively-kernel.org/lively4/lively4-projectional-editor/babel-test.js').then(
-    function(test) {
-      test.transformCodeOnClick('code-source', 'ast-transform-button', 'ast-target');
+  System.import('https://lively-kernel.org/lively4/lively4-projectional-editor/lpe.js').then(
+    function(lpe) {
+      lpe.transformCodeOnClick('code-source', 'ast-transform-button', 'ast-target');
     }
   )
 </script>
