@@ -16,9 +16,15 @@ var _babelTypes = require("babel-types");
 
 var t = _interopRequireWildcard(_babelTypes);
 
+var _blocklyTools = require("./blockly-tools");
+
+var bt = _interopRequireWildcard(_blocklyTools);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+var TYPE_PREFIX = "babel_";
 
 var colors = {
 	Program: 0,
@@ -96,17 +102,19 @@ var blockDefinitionForNodeType = function blockDefinitionForNodeType(nodetype) {
 	return blockDefinitionFromNode(t.NODE_FIELDS[nodetype], nodetype);
 };
 
-var xmlFromAST = function xmlFromAST(ast) {
-	var id = 1;
-
+var createBlocksForAST = function createBlocksForAST(ast, workspace) {
 	var parse_node = function parse_node(node) {
-		var xml = '';
+
 		var node_meta = t.NODE_FIELDS[node.type];
 
-		xml += '<block type="babel_' + node.type + '" id="' + id++ + '">';
+		var block = workspace.newBlock(TYPE_PREFIX + node.type);
+		block.babel_node = node;
+
+		block.initSvg();
+		block.render();
 
 		if (typeof node_meta.value !== 'undefined') {
-			xml += '<field name="value">' + node.value + '</field>';
+			block.getField("value").setValue(node.value);
 		} else {
 			// Go through the inputs
 			for (var field_name in node_meta) {
@@ -123,8 +131,6 @@ var xmlFromAST = function xmlFromAST(ast) {
 
 					// Decide if this is a series of nodes or a limited selection of nodes
 					if (field_meta.validate.chainOf[0].type === 'array') {
-						// This is a series of nodes
-						xml += '<statement name="' + field_name + '">';
 
 						var node_list = node[field_name];
 
@@ -135,52 +141,40 @@ var xmlFromAST = function xmlFromAST(ast) {
 								node_list.pop();
 							}
 
-							xml += parse_node(node_list[0]);
+							bt.setAsFirstStatement(parse_node(node_list[0]), block, field_name);
 						}
-
-						xml += '</statement>';
 					} else {
-						xml += '<field name="' + field_name + '">';
-						xml += node[field_name];
-						xml += '</field>';
+						block.getField(field_name).setValue(node[field_name]);
 					}
 
 					//console.log(field.validate.chainOf)
 				} else if (field_meta.validate.oneOfNodeTypes) {
-					xml += '<value name="' + field_name + '">';
-					xml += parse_node(node[field_name]);
-					xml += '</value>';
+					bt.setAsInput(parse_node(node[field_name]), block, field_name);
 				} else if (field_meta.validate.type) {
-					xml += '<value name="' + field_name + '">';
-					xml += parse_node(node[field_name]);
-					xml += '</value>';
+					bt.setAsInput(parse_node(node[field_name]), block, field_name);
 				} else {
-					xml += '<field name="' + field_name + '">';
-					xml += node[field_name];
-					xml += '</field>';
+					block.getField(field_name).setValue(node[field_name]);
 				}
 			}
 		}
 
 		if (node.next) {
-			xml += '<next>' + parse_node(node.next) + '</next>';
+			bt.setAsNext(parse_node(node.next), block);
 		}
 
-		xml += '</block>';
-
-		return xml;
+		return block;
 	};
 
-	return '<xml>' + parse_node(ast.program) + '</xml>';
+	return parse_node(ast.program);
 };
 
-var xmlFromCode = function xmlFromCode(code) {
+var createBlocksForCode = function createBlocksForCode(code, workspace) {
 	var ast = babylon.parse(code);
-	return xmlFromAST(ast);
+	return createBlocksForAST(ast, workspace);
 };
 
 // Export functions if we are running in a browser
 if (window) {
-	window.xmlFromCode = xmlFromCode;
+	window.createBlocksForCode = createBlocksForCode;
 	window.blockDefinitionForNodeType = blockDefinitionForNodeType;
 }
