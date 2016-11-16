@@ -3,6 +3,9 @@
 // Load morph base class from core
 import Morph from '../../lively4-core/templates/Morph.js';
 
+// Import babel tools
+import * as babel_tools from '../lib/babel_tools';
+
 // Projectional Editor class
 export default class ProjectionalEditor extends Morph {
   
