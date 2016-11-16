@@ -1,4 +1,4 @@
-import * as babel_tools from "../lively4-projectional-editor/blockly-tools.js";
+import * as babel_tools from "../lively4-projectional-editor/lib/blockly_tools.js";
 
 const TYPE_PREFIX = "babel_";
 

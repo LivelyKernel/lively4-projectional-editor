@@ -1,6 +1,6 @@
 <!-- Link to precompiled libraries -->
-<script type="text/javascript" src="https://lively-kernel.org/lively4/lively4-projectional-editor/blockly_compressed.js"></script>
-<script type="text/javascript" src="https://lively-kernel.org/lively4/lively4-projectional-editor/babel.js"></script>
+<script type="text/javascript" src="https://lively-kernel.org/lively4/lively4-projectional-editor/lib/blockly_compressed.js"></script>
+<script type="text/javascript" src="https://lively-kernel.org/lively4/lively4-projectional-editor/lib/babel.js"></script>
 
 <!-- Here we start our own script -->
 <script type="text/javascript">
@@ -31,7 +31,7 @@ setTimeout(function() {
     
     toolbox += '</xml>';
     
-    const workspace = Blockly.inject('blocklyDiv', {
+    const workspace = Blockly.inject(document.querySelector('#blocklyDiv'), {
         toolbox: toolbox,
         collapse: true,
         scrollbars: true
