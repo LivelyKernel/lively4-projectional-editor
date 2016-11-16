@@ -1,0 +1,33 @@
+<template id="lively-projectional-editor" data-class="LivelyProjectionalEditor" data-title="Projectional Editor">
+  
+  <style>
+    .container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+    }
+    
+    .column {
+      flex: 1;
+    }
+  </style>
+  
+  
+  <div class="container">
+    <juicy-ace-editor class="column"></juicy-ace-editor>
+    <juicy-ace-editor class="column"></juicy-ace-editor>
+  </div>
+
+  <script>
+    function lpe_init() {
+      console.log($('.columns'));
+    }
+  </script>
+</template>
+
+<script class="registrationScript">
+  let oldLively4Url = lively4url;
+  lively4url = location.origin + '/lively4/lively4-projectional-editor';
+  lively.registerTemplate()
+  lively4url = oldLively4Url;
+</script>

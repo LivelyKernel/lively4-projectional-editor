@@ -82,10 +82,15 @@ setTimeout(function() {
 }, 1000);
 </script>
 
-<div style="float: left">
-<textarea style="height:600px; width:200px;display:block" id="input">Put your code here...</textarea>
+<style>
+  .lpe-container {
+    display: flex;
+  }
+</style>
 
-<button id="button" style="display:block">Transform</button>
+<div class="lpe-container">
+  <textarea  id="input">Put your code here...</textarea>
+  <div id="blocklyDiv"></div>
 </div>
 
-<div style="height:600px; width:550px; float:left" id="blocklyDiv"></div>
+<button id="button" style="display:block">Transform</button>
