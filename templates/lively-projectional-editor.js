@@ -8,8 +8,23 @@ export default class ProjectionalEditor extends Morph {
   
   // Called to initialize the component
   initialize() {
+    //debugger;
+    
+    // Set title
     this.windowTitle = "Projectional Editor"
-    debugger;
+    
+    // Get the views
+    this.textView = this.query('#textView');
+    this.blockView = this.query('#blockView');
+    
+    // Bind the two views to each other
+    this.bindViews();
+  }
+  
+  bindViews() {
+    this.textView.addEventListener('change', (evt) => {
+      this.blockView.value = this.textView.value;
+    })
   }
 
   // Utility function to get a part of the component
