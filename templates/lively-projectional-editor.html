@@ -17,17 +17,15 @@
     <juicy-ace-editor class="column"></juicy-ace-editor>
     <juicy-ace-editor class="column"></juicy-ace-editor>
   </div>
-
-  <script>
-    function lpe_init() {
-      console.log($('.columns'));
-    }
-  </script>
+  
 </template>
 
 <script class="registrationScript">
+  // Fake the Lively URL to load the template from our own folder
   let oldLively4Url = lively4url;
   lively4url = location.origin + '/lively4/lively4-projectional-editor';
   lively.registerTemplate()
+
+  // Reset the Lively URL to the original
   lively4url = oldLively4Url;
 </script>
