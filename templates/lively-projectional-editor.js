@@ -4,7 +4,8 @@
 import Morph from '../../lively4-core/templates/Morph.js';
 
 // Import babel tools
-import * as babel_tools from '../lib/babel_tools';
+import * as babel_tools from '../lib/babel_tools.js';
+import * as blockly_tools from '../lib/blockly_tools.js';
 
 // Projectional Editor class
 export default class ProjectionalEditor extends Morph {
@@ -24,31 +25,36 @@ export default class ProjectionalEditor extends Morph {
     this.blockEditor = this.query('#blockEditor');
     
     // Initialize the block editor
-    setTimeout(() => {
-      this.initBlockEditor();
-    }, 1000);
-    
+    this.initBlockEditor();
     
     // Bind the two views to each other
-    //this.bindViews();
+    this.bindViews();
   }
   
   // Binds the content of the text- and block views
   bindViews() {
+    // Update block view when the text view changes
+    let timeout;
     this.textEditor.addEventListener('change', (evt) => {
-      this.blockEditor.value = this.textEditor.value;
+      // Cancel the old timeout
+      if(timeout) {
+        clearTimeout(timeout);
+      }
+      
+      // Start a new timeout
+      timeout = setTimeout(() => {
+        // If the content hasn't changed for 1 second, update the block view
+        this.blockWorkspace.clear();
+        babel_tools.createBlocksForCode(this.textEditor.value, this.blockWorkspace);
+      }, 1000);
     })
-  }
-  
-  buildToolbox() {
-    return '<xml><block type="controls_if"></block><block type="controls_whileUntil"></block></xml>';
   }
   
   // Injects and configures
   initBlockEditor() {
     // Inject Blockly
     this.blockWorkspace = Blockly.inject(this.blockEditor, {
-      toolbox: this.buildToolbox(),
+      toolbox: babel_tools.getToolboxDefinition(),
       collapse: true,
       scrollbars: true
     });
@@ -72,6 +78,15 @@ export default class ProjectionalEditor extends Morph {
       }
     }, 2000);
     
+    // Listen for changes on the Blockly workspace
+    this.blockWorkspace.addChangeListener((event) => {
+      if(event.type === Blockly.Events.MOVE) {
+        let block = this.blockWorkspace.getBlockById(event.blockId);
+        if(block) {
+          blockly_tools.updateBlockConnections(block);
+        }
+      }
+    });
   }
 
   // Utility function to get a part of the component
