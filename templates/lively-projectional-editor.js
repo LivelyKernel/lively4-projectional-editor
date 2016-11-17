@@ -56,7 +56,8 @@ export default class ProjectionalEditor extends Morph {
     this.blockWorkspace = Blockly.inject(this.blockEditor, {
       toolbox: babel_tools.getToolboxDefinition(),
       collapse: true,
-      scrollbars: true
+      scrollbars: true,
+      toolboxPosition: 'end' // Moves toolbox to the right
     });
     
     // There is (currently) no resize event on the window
