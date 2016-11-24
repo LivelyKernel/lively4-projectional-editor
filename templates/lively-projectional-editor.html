@@ -10,6 +10,18 @@
       width: 100%;
       height: 100%;
       display: flex;
+      flex-direction: column;
+    }
+    
+    .maincontent {
+      flex: 99;
+      display: flex;
+      flex-direction: row;
+    }
+    
+    .statusbar {
+      flex: 1;
+      background-color: gray;
     }
     
     .column1 {
@@ -481,8 +493,12 @@
   
   
   <div class="container">
-    <juicy-ace-editor class="column1" id="textEditor"></juicy-ace-editor>
-    <div class="column2" id="blockEditor"></div>
+    <div class="maincontent">
+      <juicy-ace-editor class="column1" id="textEditor"></juicy-ace-editor>
+      <div class="column2" id="blockEditor"></div>
+    </div>
+    
+    <div class="statusbar"></div>
   </div>
   
   

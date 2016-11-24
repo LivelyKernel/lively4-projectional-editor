@@ -118,6 +118,8 @@ export default class ProjectionalEditor extends Morph {
         return;
       }
       
+      this.registerUnsync();
+      
       // Cancel the old timeout
       if(timeout) {
         clearTimeout(timeout);
@@ -136,13 +138,17 @@ export default class ProjectionalEditor extends Morph {
         try {
           // Create new AST
       	  this.ast = lpe_babel.babylon.parse(this.textEditor.value);
+      	  
+      	  // Update Block editor
+          this.updateBlockEditor();
+          
+          // Show sync status
+          this.registerSync();
         } catch (e) {
           console.error("LPE: Could not parse code");
+          this.registerError();
         }
-
-        // Update Block editor
-        this.updateBlockEditor();
-
+        
       }, 1000);
     });
 
@@ -151,17 +157,26 @@ export default class ProjectionalEditor extends Morph {
       // When values are directly changed
       if(event.type === Blockly.Events.CHANGE) {
         if(!this.muteBlockEditor) {
+          this.registerUnsync();
+          
           let block = this.blockWorkspace.getBlockById(event.blockId);
           let node = block.babel_node;
           
           // Change the value in the part of the AST that belongs to this block
           node[event.name] = event.newValue;
           
-          // Update the text editor
-          this.updateTextEditor();
-          
-          // Select the corresponding text in the text editor
-          this.selectTextRange(this.textEditor.value, node.start, node.end);
+          try {
+            // Update the text editor
+            this.updateTextEditor();
+            
+            // Select the corresponding text in the text editor
+            this.selectTextRange(this.textEditor.value, node.start, node.end);
+            
+            this.registerSync();
+          } catch (e) {
+            console.error("LPE: Could not update text editor");
+            this.registerError();
+          }
         }
       }
     });
@@ -169,27 +184,17 @@ export default class ProjectionalEditor extends Morph {
 
   // Updates the block editor
   updateBlockEditor() {
-    console.log("LPE: Updating block editor");
-
-    try {
-      this.blockWorkspace.clear();
-      babel_tools.createBlocksForAST(this.ast, this.blockWorkspace);
-    } catch (e) {
-      console.error("LPE: Could not update Block editor");
-    }
+    this.blockWorkspace.clear();
+    babel_tools.createBlocksForAST(this.ast, this.blockWorkspace);
   }
 
   // Updates the text editor
   updateTextEditor() {
-    try {
-      // Generate AST
-      let generated = lpe_babel.generate(this.ast);
+    // Generate AST
+    let generated = lpe_babel.generate(this.ast);
 
-      // Set value in text editor
-      this.textEditor.value = generated.code;
-    } catch (e) {
-      console.error("LPE: Could not generate code");
-    }
+    // Set value in text editor
+    this.textEditor.value = generated.code;
   }
   
   // Turns an absolute position in a text into a row and column position
@@ -213,6 +218,18 @@ export default class ProjectionalEditor extends Morph {
     const rangeStart = this.getLineAndColumnForPosition(text, start);
     const rangeEnd = this.getLineAndColumnForPosition(text, end);
     this.textEditor.editor.getSelection().setRange(new Range(rangeStart[0], rangeStart[1], rangeEnd[0], rangeEnd[1]));
+  }
+  
+  registerSync() {
+    this.query('.statusbar').style.backgroundColor = 'green';
+  }
+  
+  registerUnsync() {
+    this.query('.statusbar').style.backgroundColor = 'yellow';
+  }
+  
+  registerError() {
+    this.query('.statusbar').style.backgroundColor = 'red';
   }
 
   // Utility function to get a part of the component
