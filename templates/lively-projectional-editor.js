@@ -154,8 +154,8 @@ export default class ProjectionalEditor extends Morph {
 
     // Update text editor when block editor changes
     this.blockWorkspace.addChangeListener((event) => {
-      // When values are directly changed
-      if(event.type === Blockly.Events.CHANGE) {
+      // When fields are directly changed
+      if(event.type === Blockly.Events.CHANGE && event.element === 'field') {
         if(!this.muteBlockEditor) {
           this.registerUnsync();
           
