@@ -27,54 +27,11 @@ export default class ProjectionalEditor extends Morph {
     // Initialize the block editor
     this.initBlockEditor();
     
-    // Bind the two views to each other
-    this.bindViews();
+    // Bind the two editors to each other
+    this.bindEditors();
   }
-  
-  // Binds the content of the text- and block views
-  bindViews() {
-    // Initialize mute variable
-    this.muteTextEditor = false;
-    this.muteBlockEditor = false;
-    
-    // Update block view when the text view changes
-    let timeout;
-    this.textEditor.addEventListener('change', (evt) => {
-      if(this.muteTextEditor) {
-        return;
-      }
-      
-      // Cancel the old timeout
-      if(timeout) {
-        clearTimeout(timeout);
-      }
-      
-      // Start a new timeout
-      timeout = setTimeout(() => {
-        // Mute the change events from the block view
-        this.muteBlockEditor = true;
-        setTimeout(() => {
-          this.muteBlockEditor = false;
-        }, 2000);
-        
-        
-        // If the content hasn't changed for 1 second, update the block view
-        try {
-      	  this.ast = lpe_babel.babylon.parse(this.textEditor.value);
-      	  this.blockWorkspace.clear();
-      	  babel_tools.createBlocksForAST(this.ast, this.blockWorkspace);
-      	  console.log(this.ast);
-        } catch (e) {
-          console.error("LPE: Could not parse code");
-          this.blockWorkspace.clear();
-        }
-        
-        //babel_tools.createBlocksForCode(this.textEditor.value, this.blockWorkspace);
-      }, 1000);
-    })
-  }
-  
-  // Injects and configures
+
+  // Injects and configures the block editor
   initBlockEditor() {
     // Inject Blockly
     this.blockWorkspace = Blockly.inject(this.blockEditor, {
@@ -107,12 +64,17 @@ export default class ProjectionalEditor extends Morph {
     var lastClickedBlock = '';
     var lastClickedTime = (new Date()).getTime();
     this.blockWorkspace.addChangeListener((event) => {
+
+      // If a block is moved, updated its connectors
       if(event.type === Blockly.Events.MOVE) {
         let block = this.blockWorkspace.getBlockById(event.blockId);
         if(block) {
           blockly_tools.updateBlockConnections(block);
         }
-      } else if(event.type === Blockly.Events.UI && event.element === 'click') {
+      }
+
+      // Collapse a block on double click
+      if(event.type === Blockly.Events.UI && event.element === 'click') {
         const newTime = (new Date()).getTime();
         if(lastClickedBlock === event.blockId && (newTime - lastClickedTime) < 1000) {
           const clickedBlock = this.blockWorkspace.getBlockById(event.blockId);
@@ -124,7 +86,10 @@ export default class ProjectionalEditor extends Morph {
           lastClickedBlock = event.blockId;
           lastClickedTime = newTime;
         }
-      } else if(event.type === Blockly.Events.UI && event.element === 'selected') {
+      }
+
+      // If a block is selected, select the corresponding text in the text editor
+      if(event.type === Blockly.Events.UI && event.element === 'selected') {
         if(!event.newValue) {
           return;
         }
@@ -136,7 +101,55 @@ export default class ProjectionalEditor extends Morph {
           // Select the corresponding text in the text editor
           this.selectTextRange(this.textEditor.value, node.start, node.end);
         }
-      } else if(event.type === Blockly.Events.CHANGE) {
+      }
+    });
+  }
+  
+  // Binds the content of the text- and block views
+  bindEditors() {
+    // Initialize mute variable
+    this.muteTextEditor = false;
+    this.muteBlockEditor = false;
+    
+    // Update block editor when the text editor changes
+    let timeout;
+    this.textEditor.addEventListener('change', (evt) => {
+      if(this.muteTextEditor) {
+        return;
+      }
+      
+      // Cancel the old timeout
+      if(timeout) {
+        clearTimeout(timeout);
+      }
+      
+      // Start a new timeout
+      timeout = setTimeout(() => {
+        // Mute the change events from the block view
+        this.muteBlockEditor = true;
+        setTimeout(() => {
+          this.muteBlockEditor = false;
+        }, 2000);
+        
+        
+        // If the content hasn't changed for 1 second, update the block view
+        try {
+          // Create new AST
+      	  this.ast = lpe_babel.babylon.parse(this.textEditor.value);
+        } catch (e) {
+          console.error("LPE: Could not parse code");
+        }
+
+        // Update Block editor
+        this.updateBlockEditor();
+
+      }, 1000);
+    });
+
+    // Update text editor when block editor changes
+    this.blockWorkspace.addChangeListener((event) => {
+      // When values are directly changed
+      if(event.type === Blockly.Events.CHANGE) {
         if(!this.muteBlockEditor) {
           let block = this.blockWorkspace.getBlockById(event.blockId);
           let node = block.babel_node;
@@ -144,22 +157,39 @@ export default class ProjectionalEditor extends Morph {
           // Change the value in the part of the AST that belongs to this block
           node[event.name] = event.newValue;
           
-          try {
-            // Generate AST
-            let generated = lpe_babel.generate(this.ast);
-
-            // Set value in text editor
-            this.muteTextEditor = false;
-            this.textEditor.value = generated.code;
-            
-            // Select the new value in the text editor
-            this.selectTextRange(generated.code, node.start, node.end);
-          } catch (e) {
-            console.error("LPE: Could not generate code");
-          }
+          // Update the text editor
+          this.updateTextEditor();
         }
       }
     });
+  }
+
+  // Updates the block editor
+  updateBlockEditor() {
+    console.log("LPE: Updating block editor");
+
+    try {
+      this.blockWorkspace.clear();
+      babel_tools.createBlocksForAST(this.ast, this.blockWorkspace);
+    } catch (e) {
+      console.error("LPE: Could not update Block editor");
+    }
+  }
+
+  // Updates the text editor
+  updateTextEditor() {
+    try {
+      // Generate AST
+      let generated = lpe_babel.generate(this.ast);
+
+      // Set value in text editor
+      this.textEditor.value = generated.code;
+      
+      // Select the new value in the text editor
+      this.selectTextRange(generated.code, node.start, node.end);
+    } catch (e) {
+      console.error("LPE: Could not generate code");
+    }
   }
   
   // Turns an absolute position in a text into a row and column position
