@@ -159,6 +159,9 @@ export default class ProjectionalEditor extends Morph {
           
           // Update the text editor
           this.updateTextEditor();
+          
+          // Select the corresponding text in the text editor
+          this.selectTextRange(this.textEditor.value, node.start, node.end);
         }
       }
     });
@@ -184,9 +187,6 @@ export default class ProjectionalEditor extends Morph {
 
       // Set value in text editor
       this.textEditor.value = generated.code;
-      
-      // Select the new value in the text editor
-      this.selectTextRange(generated.code, node.start, node.end);
     } catch (e) {
       console.error("LPE: Could not generate code");
     }
