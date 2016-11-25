@@ -185,7 +185,10 @@ export default class ProjectionalEditor extends Morph {
   // Updates the block editor
   updateBlockEditor() {
     this.blockWorkspace.clear();
+    
     babel_tools.createBlocksForAST(this.ast, this.blockWorkspace);
+    
+    //this.collapseBlocks();
   }
 
   // Updates the text editor
@@ -195,6 +198,15 @@ export default class ProjectionalEditor extends Morph {
 
     // Set value in text editor
     this.textEditor.value = generated.code;
+  }
+  
+  // Collapses all blocks (probably needs some smart strategy in the future)
+  collapseBlocks() {
+    this.blockWorkspace.getAllBlocks().map((block) => {
+      if(block.type !== 'babel_Program') {
+        block.setCollapsed(true);
+      }
+    });
   }
   
   // Turns an absolute position in a text into a row and column position
