@@ -65,14 +65,6 @@ export default class ProjectionalEditor extends Morph {
     var lastClickedTime = (new Date()).getTime();
     this.blockWorkspace.addChangeListener((event) => {
 
-      // If a block is moved, updated its connectors
-      if(event.type === Blockly.Events.MOVE) {
-        let block = this.blockWorkspace.getBlockById(event.blockId);
-        if(block) {
-          blockly_tools.updateBlockConnections(block);
-        }
-      }
-
       // Collapse a block on double click
       if(event.type === Blockly.Events.UI && event.element === 'click') {
         const newTime = (new Date()).getTime();
@@ -100,6 +92,14 @@ export default class ProjectionalEditor extends Morph {
         if(typeof(node.start) !== 'undefined' && typeof(node.end) !== 'undefined') {
           // Select the corresponding text in the text editor
           this.selectTextRange(this.textEditor.value, node.start, node.end);
+        }
+      }
+      
+      // If a block is moved, updated its connectors
+      if(event.type === Blockly.Events.MOVE) {
+        let block = this.blockWorkspace.getBlockById(event.blockId);
+        if(block) {
+          blockly_tools.updateBlockConnections(block);
         }
       }
     });
@@ -154,9 +154,14 @@ export default class ProjectionalEditor extends Morph {
 
     // Update text editor when block editor changes
     this.blockWorkspace.addChangeListener((event) => {
+      
+      if(this.muteBlockEditor) {
+        return;
+      }
+      
       // When fields are directly changed
       if(event.type === Blockly.Events.CHANGE && event.element === 'field') {
-        if(!this.muteBlockEditor) {
+        //if(!this.muteBlockEditor) {
           this.registerUnsync();
           
           let block = this.blockWorkspace.getBlockById(event.blockId);
@@ -177,6 +182,56 @@ export default class ProjectionalEditor extends Morph {
             console.error("LPE: Could not update text editor");
             this.registerError();
           }
+        //}
+      }
+      
+      // When a block is dragged around
+      if(event.type === Blockly.Events.MOVE) {
+        
+        let block = this.blockWorkspace.getBlockById(event.blockId);
+        if(block) {
+          
+          // Block parent was changed
+          if(event.oldParentId != event.newParentId) {
+            
+            // Block was removed
+            if(!event.newParentId) {
+              let oldParentBlock = this.blockWorkspace.getBlockById(event.oldParentId);
+              oldParentBlock.babel_node[event.oldInputName] = undefined;
+              
+              try {
+                // Update the text editor
+                this.updateTextEditor();
+                
+                // Select the corresponding text in the text editor
+                this.selectTextRange(this.textEditor.value, node.start, node.end);
+                
+                this.registerSync();
+              } catch (e) {
+                console.error("LPE: Could not update text editor");
+                this.registerError();
+              }
+            }
+            
+            // Block was added
+            if(!event.oldParentId) {
+              let newParentBlock = this.blockWorkspace.getBlockById(event.newParentId);
+              newParentBlock.babel_node[event.newInputName] = block.babel_node;
+              
+              try {
+                // Update the text editor
+                this.updateTextEditor();
+                
+                // Select the corresponding text in the text editor
+                this.selectTextRange(this.textEditor.value, node.start, node.end);
+                
+                this.registerSync();
+              } catch (e) {
+                console.error("LPE: Could not update text editor");
+                this.registerError();
+              }
+            }
+          }
         }
       }
     });
@@ -184,10 +239,12 @@ export default class ProjectionalEditor extends Morph {
 
   // Updates the block editor
   updateBlockEditor() {
+    
+    //this.muteBlockEditor = true;
     this.blockWorkspace.clear();
     
     babel_tools.createBlocksForAST(this.ast, this.blockWorkspace);
-    
+    //this.muteBlockEditor = false;
     //this.collapseBlocks();
   }
 
