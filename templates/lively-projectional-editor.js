@@ -131,7 +131,7 @@ export default class ProjectionalEditor extends Morph {
         this.muteBlockEditor = true;
         setTimeout(() => {
           this.muteBlockEditor = false;
-        }, 2000);
+        }, 1000);
         
         
         // If the content hasn't changed for 1 second, update the block view
@@ -161,43 +161,51 @@ export default class ProjectionalEditor extends Morph {
       
       // When fields are directly changed
       if(event.type === Blockly.Events.CHANGE && event.element === 'field') {
-        //if(!this.muteBlockEditor) {
-          this.registerUnsync();
+        this.registerUnsync();
+        
+        let block = this.blockWorkspace.getBlockById(event.blockId);
+        let node = block.babel_node;
+        
+        // Change the value in the part of the AST that belongs to this block
+        node[event.name] = event.newValue;
+        
+        try {
+          // Update the text editor
+          this.updateTextEditor();
           
-          let block = this.blockWorkspace.getBlockById(event.blockId);
-          let node = block.babel_node;
+          // Select the corresponding text in the text editor
+          this.selectTextRange(this.textEditor.value, node.start, node.end);
           
-          // Change the value in the part of the AST that belongs to this block
-          node[event.name] = event.newValue;
-          
-          try {
-            // Update the text editor
-            this.updateTextEditor();
-            
-            // Select the corresponding text in the text editor
-            this.selectTextRange(this.textEditor.value, node.start, node.end);
-            
-            this.registerSync();
-          } catch (e) {
-            console.error("LPE: Could not update text editor");
-            this.registerError();
-          }
-        //}
+          this.registerSync();
+        } catch (e) {
+          console.error("LPE: Could not update text editor");
+          this.registerError();
+        }
       }
       
       // When a block is dragged around
       if(event.type === Blockly.Events.MOVE) {
-        
+        console.log(event);
         let block = this.blockWorkspace.getBlockById(event.blockId);
         if(block) {
+          
+          let node = block.babel_node;
           
           // Block parent was changed
           if(event.oldParentId != event.newParentId) {
             
             // Block was removed
             if(!event.newParentId) {
+              console.log(event);
               let oldParentBlock = this.blockWorkspace.getBlockById(event.oldParentId);
-              oldParentBlock.babel_node[event.oldInputName] = undefined;
+              let oldInput = oldParentBlock.babel_node[event.oldInputName];
+              if(oldInput && oldInput.constructor == Array) {
+                const blockAstIndex = oldInput.indexOf(block.babel_node);
+                console.log("Found in AST at index " + blockAstIndex);
+                oldInput.splice(blockAstIndex);
+              } else {
+                oldParentBlock.babel_node[event.oldInputName] = undefined;
+              }
               
               try {
                 // Update the text editor
@@ -216,7 +224,12 @@ export default class ProjectionalEditor extends Morph {
             // Block was added
             if(!event.oldParentId) {
               let newParentBlock = this.blockWorkspace.getBlockById(event.newParentId);
-              newParentBlock.babel_node[event.newInputName] = block.babel_node;
+              let newInput = newParentBlock.babel_node[event.newInputName];
+              if(newInput && newInput.constructor === Array) {
+                newInput.push(block.babel_node);
+              } else {
+                newParentBlock.babel_node[event.newInputName] = block.babel_node;
+              }
               
               try {
                 // Update the text editor
