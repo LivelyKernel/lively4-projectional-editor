@@ -198,10 +198,18 @@ export default class ProjectionalEditor extends Morph {
             if(!event.newParentId) {
               console.log(event);
               let oldParentBlock = this.blockWorkspace.getBlockById(event.oldParentId);
-              let oldInput = oldParentBlock.babel_node[event.oldInputName];
+              
+              let oldInput;
+              if(event.oldInputName) {
+                oldInput = oldParentBlock.babel_node[event.oldInputName];
+              } else  {
+                oldInputName = oldParentBlock.getSurroundParent().getInputWithBlock(oldParentBlock).name;
+                oldInput = oldParentBlock.getSurroundParent().babel_node[oldInputName];
+              }
+
               if(oldInput && oldInput.constructor == Array) {
                 const blockAstIndex = oldInput.indexOf(block.babel_node);
-                console.log("Found in AST at index " + blockAstIndex);
+                //console.log("Found in AST at index " + blockAstIndex);
                 oldInput.splice(blockAstIndex);
               } else {
                 oldParentBlock.babel_node[event.oldInputName] = undefined;
@@ -226,7 +234,13 @@ export default class ProjectionalEditor extends Morph {
               let newParentBlock = this.blockWorkspace.getBlockById(event.newParentId);
               let newInput = newParentBlock.babel_node[event.newInputName];
               if(newInput && newInput.constructor === Array) {
-                newInput.push(block.babel_node);
+                let nextBlock = block.getNextBlock();
+                if(!nextBlock) {
+                  newInput.push(block.babel_node);
+                } else {
+                  nextBlockIndex = newInput.indexOf(nextBlock.babel_node);
+                  newInput.splice(nextBlockIndex, 0, block.babel_node);
+                }
               } else {
                 newParentBlock.babel_node[event.newInputName] = block.babel_node;
               }
@@ -267,7 +281,11 @@ export default class ProjectionalEditor extends Morph {
     let generated = lpe_babel.generate(this.ast);
 
     // Set value in text editor
+    this.muteTextEditor = true;
     this.textEditor.value = generated.code;
+    setTimeout(() => {
+      this.muteTextEditor = false;
+    }, 1000);
   }
   
   // Collapses all blocks (probably needs some smart strategy in the future)
