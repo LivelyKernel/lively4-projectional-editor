@@ -91,7 +91,7 @@ export default class ProjectionalEditor extends Morph {
         
         if(typeof(node.start) !== 'undefined' && typeof(node.end) !== 'undefined') {
           // Select the corresponding text in the text editor
-          this.selectTextRange(this.textEditor.value, node.start, node.end);
+          this.selectNodeInTextEditor(node);
         }
       }
       
@@ -174,7 +174,7 @@ export default class ProjectionalEditor extends Morph {
           this.updateTextEditor();
           
           // Select the corresponding text in the text editor
-          this.selectTextRange(this.textEditor.value, node.start, node.end);
+          this.selectNodeInTextEditor(node);
           
           this.registerSync();
         } catch (e) {
@@ -219,7 +219,7 @@ export default class ProjectionalEditor extends Morph {
                 this.updateTextEditor();
                 
                 // Select the corresponding text in the text editor
-                this.selectTextRange(this.textEditor.value, node.start, node.end);
+                this.selectNodeInTextEditor(node);
                 
                 this.registerSync();
               } catch (e) {
@@ -254,16 +254,25 @@ export default class ProjectionalEditor extends Morph {
                   let currentBlock = block;
                   let blocksToInsert = [];
                   do {
-                    nextBlockIndex = newInput.indexOf(nextBlock.babel_node);
                     blocksToInsert.push(currentBlock.babel_node);
                     currentBlock = currentBlock.getNextBlock();
+                    if(currentBlock) {
+                      nextBlockIndex = newInput.indexOf(currentBlock.babel_node);
+                    }
                   } while(currentBlock && nextBlockIndex == -1);
                   
                   // Add all newly moved in blocks
-                  while(blocksToInsert.length != 0) {
-                    let blockToInsert = blocksToInsert.pop();
-                    newInput.splice(nextBlockIndex, 0, blockToInsert);
+                  if(nextBlockIndex != -1) {
+                    while(blocksToInsert.length != 0) {
+                      let blockToInsert = blocksToInsert.pop();
+                      newInput.splice(nextBlockIndex, 0, blockToInsert);
+                    }
+                  } else {
+                    for(let i = 0; i < blocksToInsert.length; i++) {
+                      newInput.push(blocksToInsert[i]);
+                    }
                   }
+                  
                 }
               } else {
                 newParentBlock.babel_node[event.newInputName] = block.babel_node;
@@ -274,7 +283,7 @@ export default class ProjectionalEditor extends Morph {
                 this.updateTextEditor();
                 
                 // Select the corresponding text in the text editor
-                this.selectTextRange(this.textEditor.value, node.start, node.end);
+                this.selectNodeInTextEditor(node);
                 
                 this.registerSync();
               } catch (e) {
@@ -290,7 +299,7 @@ export default class ProjectionalEditor extends Morph {
   
   // Gets the input of the parent to which a block is (directly or indirectly) connected
   getParentInputOfBlock(block) {
-    let firstBlockOfChain = block.getParent()
+    let firstBlockOfChain = block;
     while(firstBlockOfChain.getParent().id != block.getSurroundParent().id) {
       firstBlockOfChain = firstBlockOfChain.getParent();
     }
@@ -309,13 +318,15 @@ export default class ProjectionalEditor extends Morph {
     
     babel_tools.createBlocksForAST(this.ast, this.blockWorkspace);
     //this.muteBlockEditor = false;
-    //this.collapseBlocks();
+    this.collapseBlocks();
   }
 
   // Updates the text editor
   updateTextEditor() {
     // Generate AST
-    let generated = lpe_babel.generate(this.ast);
+    let generated = lpe_babel.generate(this.ast, {
+      retainFunctionParens: true
+    }, this.textEditor.value);
 
     // Set value in text editor
     this.muteTextEditor = true;
@@ -323,38 +334,62 @@ export default class ProjectionalEditor extends Morph {
     setTimeout(() => {
       this.muteTextEditor = false;
     }, 1000);
+    
+    this.fixCodeLocations();
+  }
+  
+  // Fixes the location-related fields in the AST without completely updating it
+  fixCodeLocations() {
+    let newAst = lpe_babel.babylon.parse(this.textEditor.value);
+    
+    let fixNode = (newNode, node) => {
+      if(typeof(newNode.start) !== 'undefined') {
+        node.start = newNode.start;
+      }
+      
+      if(typeof(newNode.end) !== 'undefined') {
+        node.end = newNode.end;
+      }
+      
+      if(typeof(newNode.loc) !== 'undefined') {
+        node.loc = newNode.loc;
+      }
+      
+      if(newNode.type === 'File') {
+        fixNode(newNode.program, node.program)
+      } else {
+        for(let key in newNode) {
+          if(newNode[key] instanceof Array && node[key] instanceof Array
+             && newNode[key].length == node[key].length) {
+            for(let i = 0; i < newNode[key].length; i++) {
+              fixNode(newNode[key][i], node[key][i]);
+            }
+          } else if(newNode[key] && newNode[key].loc
+                    && node[key] && node[key].loc) {
+            fixNode(newNode[key], node[key]);
+          }
+        }
+      }
+      
+    }
+    
+    fixNode(newAst, this.ast);
   }
   
   // Collapses all blocks (probably needs some smart strategy in the future)
   collapseBlocks() {
     this.blockWorkspace.getAllBlocks().map((block) => {
-      if(block.type !== 'babel_Program') {
+      if(block.type !== 'babel_Program'/* && block.getSurroundParent() && block.getSurroundParent().type == 'babel_Program'*/) {
         block.setCollapsed(true);
       }
     });
   }
   
-  // Turns an absolute position in a text into a row and column position
-  getLineAndColumnForPosition(text, pos) {
-    let line = 0;
-    let col = 0;
-    for(let i = 0; i < pos; i++) {
-      col++;
-      if(text[i] == '\n') {
-        line++;
-        col = 0;
-      }
-    }
-    
-    return [line, col];
-  }
-  
-  // Selects a range of text in the text editor
-  selectTextRange(text, start, end) {
+  // Selects the code for the given node in the text editor
+  selectNodeInTextEditor(node) {
     const Range = ace.require("ace/range").Range;
-    const rangeStart = this.getLineAndColumnForPosition(text, start);
-    const rangeEnd = this.getLineAndColumnForPosition(text, end);
-    this.textEditor.editor.getSelection().setRange(new Range(rangeStart[0], rangeStart[1], rangeEnd[0], rangeEnd[1]));
+    const nodeRange = new Range(node.loc.start.line-1, node.loc.start.column, node.loc.end.line-1, node.loc.end.column);
+    this.textEditor.editor.getSelection().setRange(nodeRange);
   }
   
   registerSync() {
