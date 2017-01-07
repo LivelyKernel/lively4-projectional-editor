@@ -203,8 +203,7 @@ export default class ProjectionalEditor extends Morph {
               if(event.oldInputName) {
                 oldInput = oldParentBlock.babel_node[event.oldInputName];
               } else  {
-                oldInputName = oldParentBlock.getSurroundParent().getInputWithBlock(oldParentBlock).name;
-                oldInput = oldParentBlock.getSurroundParent().babel_node[oldInputName];
+                oldInput = this.getParentInputOfBlock(oldParentBlock);
               }
 
               if(oldInput && oldInput.constructor == Array) {
@@ -232,14 +231,39 @@ export default class ProjectionalEditor extends Morph {
             // Block was added
             if(!event.oldParentId) {
               let newParentBlock = this.blockWorkspace.getBlockById(event.newParentId);
-              let newInput = newParentBlock.babel_node[event.newInputName];
+              
+              // Check if it was added to an input or a chain
+              let newInput;
+              if(event.newInputName) {
+                // It was added directly to the input - use the input
+                newInput = newParentBlock.babel_node[event.newInputName];
+              } else {
+                newInput = this.getParentInputOfBlock(block);
+              }
+              
               if(newInput && newInput.constructor === Array) {
+                // Check if the moved block has a successor (AFTER moving!)
                 let nextBlock = block.getNextBlock();
                 if(!nextBlock) {
+                  // No successor - just push the node
                   newInput.push(block.babel_node);
                 } else {
-                  nextBlockIndex = newInput.indexOf(nextBlock.babel_node);
-                  newInput.splice(nextBlockIndex, 0, block.babel_node);
+                  // We have a successor
+                  // Find all successors to add successors
+                  let nextBlockIndex;
+                  let currentBlock = block;
+                  let blocksToInsert = [];
+                  do {
+                    nextBlockIndex = newInput.indexOf(nextBlock.babel_node);
+                    blocksToInsert.push(currentBlock.babel_node);
+                    currentBlock = currentBlock.getNextBlock();
+                  } while(currentBlock && nextBlockIndex == -1);
+                  
+                  // Add all newly moved in blocks
+                  while(blocksToInsert.length != 0) {
+                    let blockToInsert = blocksToInsert.pop();
+                    newInput.splice(nextBlockIndex, 0, blockToInsert);
+                  }
                 }
               } else {
                 newParentBlock.babel_node[event.newInputName] = block.babel_node;
@@ -262,6 +286,19 @@ export default class ProjectionalEditor extends Morph {
         }
       }
     });
+  }
+  
+  // Gets the input of the parent to which a block is (directly or indirectly) connected
+  getParentInputOfBlock(block) {
+    let firstBlockOfChain = block.getParent()
+    while(firstBlockOfChain.getParent().id != block.getSurroundParent().id) {
+      firstBlockOfChain = firstBlockOfChain.getParent();
+    }
+    
+    let inputName = block.getSurroundParent().getInputWithBlock(firstBlockOfChain).name
+    let input = block.getSurroundParent().babel_node[inputName];
+    
+    return input;
   }
 
   // Updates the block editor
