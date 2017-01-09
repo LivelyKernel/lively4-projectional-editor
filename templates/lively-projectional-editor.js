@@ -38,7 +38,9 @@ export default class ProjectionalEditor extends Morph {
       toolbox: babel_tools.getToolboxDefinition(),
       collapse: true,
       scrollbars: true,
-      toolboxPosition: 'end' // Moves toolbox to the right
+      //trashcan: true,
+      toolboxPosition: 'end', // Moves toolbox to the right
+      horizontalLayout: true
     });
     
     // There is (currently) no resize event on the window
@@ -100,6 +102,18 @@ export default class ProjectionalEditor extends Morph {
         let block = this.blockWorkspace.getBlockById(event.blockId);
         if(block) {
           blockly_tools.updateBlockConnections(block);
+        }
+      }
+      
+      // If a block is collapsed, set the placeholder text
+      if(event.type === Blockly.Events.CHANGE && event.element === 'collapsed') {
+        const block = this.blockWorkspace.getBlockById(event.blockId);
+        if(block && block.getInput('_TEMP_COLLAPSED_INPUT') && block.getInput('_TEMP_COLLAPSED_INPUT').fieldRow) {
+          let summaryField = block.getInput('_TEMP_COLLAPSED_INPUT').fieldRow[0];
+          if(summaryField) {
+            const text = this.textEditor.value.substring(block.babel_node.start, block.babel_node.end);
+            summaryField.setText(text);
+          }
         }
       }
     });
