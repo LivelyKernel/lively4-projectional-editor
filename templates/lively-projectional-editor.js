@@ -108,13 +108,7 @@ export default class ProjectionalEditor extends Morph {
       // If a block is collapsed, set the placeholder text
       if(event.type === Blockly.Events.CHANGE && event.element === 'collapsed') {
         const block = this.blockWorkspace.getBlockById(event.blockId);
-        if(block && block.getInput('_TEMP_COLLAPSED_INPUT') && block.getInput('_TEMP_COLLAPSED_INPUT').fieldRow) {
-          let summaryField = block.getInput('_TEMP_COLLAPSED_INPUT').fieldRow[0];
-          if(summaryField) {
-            const text = this.textEditor.value.substring(block.babel_node.start, block.babel_node.end);
-            summaryField.setText(text);
-          }
-        }
+        this.fixSummaryTextOfBlock(block);
       }
     });
   }
@@ -181,7 +175,36 @@ export default class ProjectionalEditor extends Morph {
         let node = block.babel_node;
         
         // Change the value in the part of the AST that belongs to this block
+        let oldValue = node[event.name];
         node[event.name] = event.newValue;
+        
+        // If the node is an Identifier, also change all other identifiers
+        if(node.type === 'Identifier') {
+          let changeIdentifier = (node, oldValue, newValue) => {
+            // Update AST value and block text
+            if(node.type && node.type === 'Identifier' && node[event.name] === oldValue) {
+              node[event.name] = newValue;
+              node.blockly_block.getInput(event.name).fieldRow[1].setValue(newValue);
+              this.fixSummaryTextOfBlock(node.blockly_block);
+            }
+            for(let key in node) {
+              // Avoid cycles
+              if(key === 'blockly_block') {
+                continue;
+              }
+              
+              if(node[key] instanceof Array && node[key].length > 0) {
+                for(let i = 0; i < node[key].length; i++) {
+                  changeIdentifier(node[key][i], oldValue, newValue);
+                }
+              } else if(node[key] instanceof Object) {
+                changeIdentifier(node[key], oldValue, newValue);
+              }
+            }
+          }
+          
+          changeIdentifier(this.ast, oldValue, event.newValue);
+        }
         
         try {
           // Update the text editor
@@ -357,6 +380,7 @@ export default class ProjectionalEditor extends Morph {
     let newAst = lpe_babel.babylon.parse(this.textEditor.value);
     
     let fixNode = (newNode, node) => {
+      // Update location
       if(typeof(newNode.start) !== 'undefined') {
         node.start = newNode.start;
       }
@@ -369,6 +393,12 @@ export default class ProjectionalEditor extends Morph {
         node.loc = newNode.loc;
       }
       
+      // Also update summary text
+      if(node.blockly_block) {
+        this.fixSummaryTextOfBlock(node.blockly_block);
+      }
+      
+      // Recursively traverse tree
       if(newNode.type === 'File') {
         fixNode(newNode.program, node.program)
       } else {
@@ -390,10 +420,18 @@ export default class ProjectionalEditor extends Morph {
     fixNode(newAst, this.ast);
   }
   
+  // Updates the summary of a block
+  fixSummaryTextOfBlock(block) {
+    if(block.isCollapsed()) {
+      const text = this.textEditor.value.substring(block.babel_node.start, block.babel_node.end);
+      block.getInput('_TEMP_COLLAPSED_INPUT').fieldRow[0].setText(text);
+    }
+  }
+  
   // Collapses all blocks (probably needs some smart strategy in the future)
   collapseBlocks() {
     this.blockWorkspace.getAllBlocks().map((block) => {
-      if(block.type !== 'babel_Program'/* && block.getSurroundParent() && block.getSurroundParent().type == 'babel_Program'*/) {
+      if(block.type !== 'babel_Program') {
         block.setCollapsed(true);
       }
     });
