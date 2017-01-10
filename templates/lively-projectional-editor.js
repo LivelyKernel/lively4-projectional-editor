@@ -189,7 +189,7 @@ export default class ProjectionalEditor extends Morph {
             }
             for(let key in node) {
               // Avoid cycles
-              if(key === 'blockly_block') {
+              if(key === 'blockly_block' || key === 'next') {
                 continue;
               }
               
@@ -203,7 +203,40 @@ export default class ProjectionalEditor extends Morph {
             }
           }
           
-          changeIdentifier(this.ast, oldValue, event.newValue);
+          // Find the node at which we have to start renaming
+          const stopTypes = [
+            'ForStatement',
+            'WhileStatement',
+            'DoWhileStatement',
+            'FunctionExpression',
+            'FunctionDeclaration',
+            'BlockStatement',
+            'Program'
+          ];
+          
+          // Find the first parent that is of stopType
+          let originalNode = node;
+          while(node && node.type && stopTypes.indexOf(node.type) === -1) {
+            let parentBlock = node.blockly_block.getSurroundParent();
+            if(parentBlock) {
+              node = parentBlock.babel_node;
+            } else {
+              node = null;
+            }
+          }
+          
+          if(node !== null) {
+            // If the found parent is a block, check if it was preceded by another stopType
+            let parentBlock = node.blockly_block.getSurroundParent();
+            if(node.type === 'BlockStatement' && parentBlock && parentBlock.babel_node.type !== 'BlockStatement' && stopTypes.indexOf(parentBlock.babel_node.type) !== -1)  {
+              node = parentBlock.babel_node;
+            }
+          } else  {
+            node = originalNode;
+          }
+          
+          // Rename other Identifiers
+          changeIdentifier(node, oldValue, event.newValue);
         }
         
         try {
