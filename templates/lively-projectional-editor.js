@@ -178,65 +178,67 @@ export default class ProjectionalEditor extends Morph {
         let oldValue = node[event.name];
         node[event.name] = event.newValue;
         
-        // If the node is an Identifier, also change all other identifiers
-        if(node.type === 'Identifier') {
-          let changeIdentifier = (node, oldValue, newValue) => {
-            // Update AST value and block text
-            if(node.type && node.type === 'Identifier' && node[event.name] === oldValue) {
-              node[event.name] = newValue;
-              node.blockly_block.getInput(event.name).fieldRow[1].setValue(newValue);
-              this.fixSummaryTextOfBlock(node.blockly_block);
-            }
-            for(let key in node) {
-              // Avoid cycles
-              if(key === 'blockly_block' || key === 'next') {
-                continue;
+        if(this.query('#smartRenamingBox').checked) {
+          // If the node is an Identifier, also change all other identifiers
+          if(node.type === 'Identifier') {
+            let changeIdentifier = (node, oldValue, newValue) => {
+              // Update AST value and block text
+              if(node.type && node.type === 'Identifier' && node[event.name] === oldValue) {
+                node[event.name] = newValue;
+                node.blockly_block.getInput(event.name).fieldRow[1].setValue(newValue);
+                this.fixSummaryTextOfBlock(node.blockly_block);
               }
-              
-              if(node[key] instanceof Array && node[key].length > 0) {
-                for(let i = 0; i < node[key].length; i++) {
-                  changeIdentifier(node[key][i], oldValue, newValue);
+              for(let key in node) {
+                // Avoid cycles
+                if(key === 'blockly_block' || key === 'next') {
+                  continue;
                 }
-              } else if(node[key] instanceof Object) {
-                changeIdentifier(node[key], oldValue, newValue);
+                
+                if(node[key] instanceof Array && node[key].length > 0) {
+                  for(let i = 0; i < node[key].length; i++) {
+                    changeIdentifier(node[key][i], oldValue, newValue);
+                  }
+                } else if(node[key] instanceof Object) {
+                  changeIdentifier(node[key], oldValue, newValue);
+                }
               }
             }
-          }
-          
-          // Find the node at which we have to start renaming
-          const stopTypes = [
-            'ForStatement',
-            'WhileStatement',
-            'DoWhileStatement',
-            'FunctionExpression',
-            'FunctionDeclaration',
-            'BlockStatement',
-            'Program'
-          ];
-          
-          // Find the first parent that is of stopType
-          let originalNode = node;
-          while(node && node.type && stopTypes.indexOf(node.type) === -1) {
-            let parentBlock = node.blockly_block.getSurroundParent();
-            if(parentBlock) {
-              node = parentBlock.babel_node;
-            } else {
-              node = null;
+            
+            // Find the node at which we have to start renaming
+            const stopTypes = [
+              'ForStatement',
+              'WhileStatement',
+              'DoWhileStatement',
+              'FunctionExpression',
+              'FunctionDeclaration',
+              'BlockStatement',
+              'Program'
+            ];
+            
+            // Find the first parent that is of stopType
+            let originalNode = node;
+            while(node && node.type && stopTypes.indexOf(node.type) === -1) {
+              let parentBlock = node.blockly_block.getSurroundParent();
+              if(parentBlock) {
+                node = parentBlock.babel_node;
+              } else {
+                node = null;
+              }
             }
-          }
-          
-          if(node !== null) {
-            // If the found parent is a block, check if it was preceded by another stopType
-            let parentBlock = node.blockly_block.getSurroundParent();
-            if(node.type === 'BlockStatement' && parentBlock && parentBlock.babel_node.type !== 'BlockStatement' && stopTypes.indexOf(parentBlock.babel_node.type) !== -1)  {
-              node = parentBlock.babel_node;
+            
+            if(node !== null) {
+              // If the found parent is a block, check if it was preceded by another stopType
+              let parentBlock = node.blockly_block.getSurroundParent();
+              if(node.type === 'BlockStatement' && parentBlock && parentBlock.babel_node.type !== 'BlockStatement' && stopTypes.indexOf(parentBlock.babel_node.type) !== -1)  {
+                node = parentBlock.babel_node;
+              }
+            } else  {
+              node = originalNode;
             }
-          } else  {
-            node = originalNode;
+            
+            // Rename other Identifiers
+            changeIdentifier(node, oldValue, event.newValue);
           }
-          
-          // Rename other Identifiers
-          changeIdentifier(node, oldValue, event.newValue);
         }
         
         try {
@@ -478,15 +480,15 @@ export default class ProjectionalEditor extends Morph {
   }
   
   registerSync() {
-    this.query('.statusbar').style.backgroundColor = 'green';
+    this.query('.statusicon').style.backgroundColor = 'green';
   }
   
   registerUnsync() {
-    this.query('.statusbar').style.backgroundColor = 'yellow';
+    this.query('.statusicon').style.backgroundColor = 'yellow';
   }
   
   registerError() {
-    this.query('.statusbar').style.backgroundColor = 'red';
+    this.query('.statusicon').style.backgroundColor = 'red';
   }
 
   // Utility function to get a part of the component

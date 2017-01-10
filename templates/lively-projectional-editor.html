@@ -14,14 +14,32 @@
     }
     
     .maincontent {
-      flex: 99;
+      flex: 1;
       display: flex;
       flex-direction: row;
     }
     
-    .statusbar {
-      flex: 1;
+    .toolbar {
+      flex: 0 0 1.5em;
+      box-shadow: 0px 0px 5px #ccc;
+      z-index: 5;
+    }
+    
+    .toolbar > div {
+      padding: 3px 5px 0px 5px;
+      float: left
+      
+    }
+    
+    .toolbar .status {
+      float: right;
+    }
+    
+    .toolbar .statusicon {
       background-color: gray;
+      width: 1em;
+      height: 1em;
+      border-radius: 0.5em;
     }
     
     .column1 {
@@ -496,12 +514,19 @@
   
   
   <div class="container">
-    <div class="maincontent">
-      <juicy-ace-editor class="column1" id="textEditor"></juicy-ace-editor>
-      <div class="column2" id="blockEditor"></div>
+    
+    <div class="toolbar">
+        <div><label><input type="checkbox" id="smartRenamingBox" value="smart_renaming"> Smart renaming</label></div>
+        <div><label><input type="checkbox" id="preventInvalidBox" value="prevent_invalid"> Prevent invalid code generation</label></div>
+        <div class="status">
+          <div class="statusicon"></div>
+        </div>
     </div>
     
-    <div class="statusbar"></div>
+    <div class="maincontent">
+      <juicy-ace-editor class="column1" id="textEditor" mode="ace/mode/javascript"></juicy-ace-editor>
+      <div class="column2" id="blockEditor"></div>
+    </div>
   </div>
   
   
