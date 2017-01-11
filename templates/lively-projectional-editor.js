@@ -91,7 +91,7 @@ export default class ProjectionalEditor extends Morph {
         let block = this.blockWorkspace.getBlockById(event.newValue);
         let node = block.babel_node;
         
-        if(typeof(node.start) !== 'undefined' && typeof(node.end) !== 'undefined') {
+        if(node && typeof(node.start) !== 'undefined' && typeof(node.end) !== 'undefined') {
           // Select the corresponding text in the text editor
           this.selectNodeInTextEditor(node);
         }
@@ -215,6 +215,14 @@ export default class ProjectionalEditor extends Morph {
               'Program'
             ];
             
+            const outerStopTypes = [
+              'ForStatement',
+              'WhileStatement',
+              'DoWhileStatement',
+              'FunctionExpression',
+              'FunctionDeclaration'
+            ];
+            
             // Find the first parent that is of stopType
             let originalNode = node;
             while(node && node.type && stopTypes.indexOf(node.type) === -1) {
@@ -229,7 +237,7 @@ export default class ProjectionalEditor extends Morph {
             if(node !== null) {
               // If the found parent is a block, check if it was preceded by another stopType
               let parentBlock = node.blockly_block.getSurroundParent();
-              if(node.type === 'BlockStatement' && parentBlock && parentBlock.babel_node.type !== 'BlockStatement' && stopTypes.indexOf(parentBlock.babel_node.type) !== -1)  {
+              if(node.type === 'BlockStatement' && parentBlock && outerStopTypes.indexOf(parentBlock.babel_node.type) !== -1)  {
                 node = parentBlock.babel_node;
               }
             } else  {
@@ -366,6 +374,16 @@ export default class ProjectionalEditor extends Morph {
           }
         }
       }
+      
+      // When a new block is created
+      if(event.type === Blockly.Events.CREATE) {
+        console.log(event);
+        let block = this.blockWorkspace.getBlockById(event.blockId);
+        block.babel_node = babel_tools.createNodeOfType(block.type);
+        block.babel_node.blockly_block = block;
+        console.log(block)
+        
+      }
     });
   }
   
@@ -443,8 +461,8 @@ export default class ProjectionalEditor extends Morph {
             for(let i = 0; i < newNode[key].length; i++) {
               fixNode(newNode[key][i], node[key][i]);
             }
-          } else if(newNode[key] && newNode[key].loc
-                    && node[key] && node[key].loc) {
+          } else if(newNode[key] && newNode[key].type
+                    && node[key] && node[key].type) {
             fixNode(newNode[key], node[key]);
           }
         }
