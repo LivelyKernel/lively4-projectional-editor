@@ -12,10 +12,13 @@ export default class ProjectionalEditor extends Morph {
   
   // Called to initialize the component
   initialize() {
-    //debugger;
-    
     // Set title
     this.windowTitle = "Projectional Editor"
+    
+    // Configure babylon
+    this.babylonOptions = {
+      sourceType: 'module'
+    };
     
     // Set default size
     this.parentElement.setSize(800, 600);
@@ -32,10 +35,6 @@ export default class ProjectionalEditor extends Morph {
     
     // Bind the two editors to each other
     this.bindEditors();
-    
-    // Create initial block
-    //this.ast = lpe_babel.babylon.parse('');
-    //this.updateBlockEditor();
   }
   
   // Initializes the text editor
@@ -153,7 +152,7 @@ export default class ProjectionalEditor extends Morph {
       
       // Try to parse
       try {
-        let partialAst = lpe_babel.babylon.parse(code);
+        let partialAst = lpe_babel.babylon.parse(code, this.babylonOptions);
         let blocks = BabelTools.createBlocksForAST(partialAst.program.body[0], this.blockWorkspace);
       } catch(e) {
         console.error('LPE: Could not transform text entry block');
@@ -193,7 +192,7 @@ export default class ProjectionalEditor extends Morph {
         // If the content hasn't changed for 1 second, update the block view
         try {
           // Create new AST
-      	  this.ast = lpe_babel.babylon.parse(this.textEditor.value);
+      	  this.ast = lpe_babel.babylon.parse(this.textEditor.value, this.babylonOptions);
       	  
       	  // Update Block editor
           this.updateBlockEditor();
@@ -532,7 +531,7 @@ export default class ProjectionalEditor extends Morph {
   
   // Fixes the location-related fields in the AST without completely updating it
   fixCodeLocations() {
-    let newAst = lpe_babel.babylon.parse(this.textEditor.value);
+    let newAst = lpe_babel.babylon.parse(this.textEditor.value, this.babylonOptions);
     
     let fixNode = (newNode, node) => {
       // Update location
