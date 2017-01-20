@@ -4,8 +4,8 @@
 import Morph from '../../lively4-core/templates/Morph.js';
 
 // Import babel tools
-import * as babel_tools from '../lib/babel_tools.js';
-import * as blockly_tools from '../lib/blockly_tools.js';
+import * as BabelTools from '../lib/babel_tools.js';
+import * as BlocklyTools from '../lib/blockly_tools.js';
 
 // Projectional Editor class
 export default class ProjectionalEditor extends Morph {
@@ -35,7 +35,7 @@ export default class ProjectionalEditor extends Morph {
   initBlockEditor() {
     // Inject Blockly
     this.blockWorkspace = Blockly.inject(this.blockEditor, {
-      toolbox: babel_tools.getToolboxDefinition(),
+      toolbox: BabelTools.getToolboxDefinition(),
       collapse: true,
       scrollbars: true,
       //trashcan: true,
@@ -101,7 +101,7 @@ export default class ProjectionalEditor extends Morph {
       if(event.type === Blockly.Events.MOVE) {
         let block = this.blockWorkspace.getBlockById(event.blockId);
         if(block) {
-          blockly_tools.updateBlockConnections(block);
+          BlocklyTools.updateBlockConnections(block);
         }
       }
       
@@ -379,7 +379,7 @@ export default class ProjectionalEditor extends Morph {
       if(event.type === Blockly.Events.CREATE) {
         console.log(event);
         let block = this.blockWorkspace.getBlockById(event.blockId);
-        block.babel_node = babel_tools.createNodeOfType(block.type);
+        block.babel_node = BabelTools.createNodeOfType(block.type);
         block.babel_node.blockly_block = block;
         console.log(block)
         
@@ -406,7 +406,7 @@ export default class ProjectionalEditor extends Morph {
     //this.muteBlockEditor = true;
     this.blockWorkspace.clear();
     
-    babel_tools.createBlocksForAST(this.ast, this.blockWorkspace);
+    BabelTools.createBlocksForAST(this.ast, this.blockWorkspace);
     //this.muteBlockEditor = false;
     this.collapseBlocks();
   }
