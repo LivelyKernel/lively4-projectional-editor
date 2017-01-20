@@ -29,6 +29,10 @@ export default class ProjectionalEditor extends Morph {
     
     // Bind the two editors to each other
     this.bindEditors();
+    
+    // Create initial block
+    //this.ast = lpe_babel.babylon.parse('');
+    //this.updateBlockEditor();
   }
 
   // Injects and configures the block editor
@@ -109,6 +113,21 @@ export default class ProjectionalEditor extends Morph {
       if(event.type === Blockly.Events.CHANGE && event.element === 'collapsed') {
         const block = this.blockWorkspace.getBlockById(event.blockId);
         this.fixSummaryTextOfBlock(block);
+      }
+    });
+    
+    
+    // Add doubleclick listener to background for text entry
+    const background = this.query('.blocklyMainBackground');
+    background.addEventListener('dblclick', () => {
+      const code = window.prompt('Code:');
+      
+      // Try to parse
+      try {
+        let partialAst = lpe_babel.babylon.parse(code);
+        let blocks = BabelTools.createBlocksForAST(partialAst.program.body[0], this.blockWorkspace);
+      } catch(e) {
+        console.error('LPE: Could not transform text entry block');
       }
     });
   }
@@ -310,6 +329,7 @@ export default class ProjectionalEditor extends Morph {
             
             // Block was added
             if(!event.oldParentId) {
+              
               let newParentBlock = this.blockWorkspace.getBlockById(event.newParentId);
               
               // Check if it was added to an input or a chain
@@ -355,7 +375,14 @@ export default class ProjectionalEditor extends Morph {
                   
                 }
               } else {
-                newParentBlock.babel_node[event.newInputName] = block.babel_node;
+                let newInputName;
+                if(event.newInputName) {
+                  newInputName = event.newInputName;
+                } else {
+                  newInputName = this.getParentInputNameOfBlock(block);
+                }
+                
+                newParentBlock.babel_node[newInputName] = block.babel_node;
               }
               
               try {
@@ -377,27 +404,37 @@ export default class ProjectionalEditor extends Morph {
       
       // When a new block is created
       if(event.type === Blockly.Events.CREATE) {
+        
         console.log(event);
+        
+        // Create the block
         let block = this.blockWorkspace.getBlockById(event.blockId);
+        
+        // Create the babel node
         block.babel_node = BabelTools.createNodeOfType(block.type);
         block.babel_node.blockly_block = block;
-        console.log(block)
-        
       }
     });
   }
   
   // Gets the input of the parent to which a block is (directly or indirectly) connected
   getParentInputOfBlock(block) {
+    let inputName = this.getParentInputNameOfBlock(block);
+    let input = block.getSurroundParent().babel_node[inputName];
+    
+    return input;
+  }
+  
+  // Gets the input name of the parent to which a block is (directly or indirectly) connected
+  getParentInputNameOfBlock(block) {
     let firstBlockOfChain = block;
     while(firstBlockOfChain.getParent().id != block.getSurroundParent().id) {
       firstBlockOfChain = firstBlockOfChain.getParent();
     }
     
     let inputName = block.getSurroundParent().getInputWithBlock(firstBlockOfChain).name
-    let input = block.getSurroundParent().babel_node[inputName];
     
-    return input;
+    return inputName;
   }
 
   // Updates the block editor
@@ -416,7 +453,7 @@ export default class ProjectionalEditor extends Morph {
     // Generate AST
     let generated = lpe_babel.generate(this.ast, {
       retainFunctionParens: true
-    }, this.textEditor.value);
+    }/*, this.textEditor.value*/);
 
     // Set value in text editor
     this.muteTextEditor = true;
@@ -493,8 +530,10 @@ export default class ProjectionalEditor extends Morph {
   // Selects the code for the given node in the text editor
   selectNodeInTextEditor(node) {
     const Range = ace.require("ace/range").Range;
-    const nodeRange = new Range(node.loc.start.line-1, node.loc.start.column, node.loc.end.line-1, node.loc.end.column);
-    this.textEditor.editor.getSelection().setRange(nodeRange);
+    if(node.loc) {
+      const nodeRange = new Range(node.loc.start.line-1, node.loc.start.column, node.loc.end.line-1, node.loc.end.column);
+      this.textEditor.editor.getSelection().setRange(nodeRange);
+    }
   }
   
   registerSync() {
