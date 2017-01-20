@@ -519,11 +519,23 @@
   <div class="container">
     
     <div class="toolbar">
-        <div><label><input type="checkbox" id="smartRenamingBox" value="smart_renaming"> Smart renaming</label></div>
-        <!--<div><label><input type="checkbox" id="preventInvalidBox" value="prevent_invalid"> Prevent invalid code generation</label></div>-->
-        <div class="status">
-          <div class="statusicon"></div>
-        </div>
+      <div>
+        <label>
+          <input type="checkbox" id="showTextEditorBox" value="smart_renaming" checked> Show text editor
+        </label>
+      </div>
+      <div>
+        <label>
+          <input type="checkbox" id="smartRenamingBox" value="smart_renaming"> Smart renaming
+        </label>
+      </div>
+      <div>
+        <button id="runCodeButton">Run</button>
+      </div>
+    
+      <div class="status">
+        <div class="statusicon"></div>
+      </div>
     </div>
     
     <div class="maincontent">

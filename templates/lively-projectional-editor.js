@@ -24,6 +24,9 @@ export default class ProjectionalEditor extends Morph {
     this.textEditor = this.query('#textEditor');
     this.blockEditor = this.query('#blockEditor');
     
+    // Initialize the text editor
+    this.initTextEditor();
+    
     // Initialize the block editor
     this.initBlockEditor();
     
@@ -33,6 +36,32 @@ export default class ProjectionalEditor extends Morph {
     // Create initial block
     //this.ast = lpe_babel.babylon.parse('');
     //this.updateBlockEditor();
+  }
+  
+  // Initializes the text editor
+  initTextEditor() {
+    // Add listener to show and hide text editor
+    var showTextEditorBox = this.query("#showTextEditorBox");
+    showTextEditorBox.addEventListener('click', () => {
+      if(showTextEditorBox.checked) {
+        this.textEditor.style.display = 'flex';
+        this.updateTextEditor();
+      } else {
+        this.textEditor.style.display = 'none';
+      }
+    });
+    
+    // Add listener to run code
+    this.query('#runCodeButton').addEventListener('click', () => {
+      try {
+        let generated = lpe_babel.generate(this.ast, {
+          retainFunctionParens: true
+        });
+        eval(generated.code);
+      } catch (e) {
+        console.error('LPE: Could not run code');
+      }
+    });
   }
 
   // Injects and configures the block editor
@@ -451,6 +480,7 @@ export default class ProjectionalEditor extends Morph {
   // Updates the text editor
   updateTextEditor() {
     // Generate AST
+    this.removeCodeLocations();
     let generated = lpe_babel.generate(this.ast, {
       retainFunctionParens: true
     }/*, this.textEditor.value*/);
@@ -464,6 +494,41 @@ export default class ProjectionalEditor extends Morph {
     
     this.fixCodeLocations();
   }
+  
+  
+  // Fixes the location-related fields in the AST without completely updating it
+  removeCodeLocations() {
+    let fixNode = (node) => {
+      // Update location
+      delete node.start;
+      delete node.end;
+      delete node.loc;
+      
+      // Recursively traverse tree
+      if(node.type === 'File') {
+        fixNode(node.program)
+      } else {
+        for(let key in node) {
+          if(key === 'next' || key === 'blockly_block') {
+            continue;
+          }
+            
+          if(node[key] instanceof Array) {
+            for(let i = 0; i < node[key].length; i++) {
+              fixNode(node[key][i]);
+            }
+          } else if(node[key] && node[key].type) {
+            fixNode(node[key]);
+          }
+        }
+      }
+      
+    }
+    
+    fixNode(this.ast);
+  }
+  
+  
   
   // Fixes the location-related fields in the AST without completely updating it
   fixCodeLocations() {
