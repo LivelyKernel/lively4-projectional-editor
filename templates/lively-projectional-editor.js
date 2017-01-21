@@ -323,7 +323,7 @@ export default class ProjectionalEditor extends Morph {
             
             // Block was removed
             if(!event.newParentId) {
-              console.log(event);
+              
               let oldParentBlock = this.blockWorkspace.getBlockById(event.oldParentId);
               
               let oldInput;
@@ -337,8 +337,10 @@ export default class ProjectionalEditor extends Morph {
                 const blockAstIndex = oldInput.indexOf(block.babel_node);
                 //console.log("Found in AST at index " + blockAstIndex);
                 oldInput.splice(blockAstIndex);
-              } else {
+              } else if (event.oldInputName) {
                 oldParentBlock.babel_node[event.oldInputName] = undefined;
+              } else {
+                return;
               }
               
               try {
@@ -448,21 +450,27 @@ export default class ProjectionalEditor extends Morph {
   // Gets the input of the parent to which a block is (directly or indirectly) connected
   getParentInputOfBlock(block) {
     let inputName = this.getParentInputNameOfBlock(block);
-    let input = block.getSurroundParent().babel_node[inputName];
-    
-    return input;
+    if(inputName) {
+      let input = block.getSurroundParent().babel_node[inputName];
+      return input;
+    } else {
+      return null;
+    }
   }
   
   // Gets the input name of the parent to which a block is (directly or indirectly) connected
   getParentInputNameOfBlock(block) {
     let firstBlockOfChain = block;
-    while(firstBlockOfChain.getParent().id != block.getSurroundParent().id) {
+    while(firstBlockOfChain.getParent() && firstBlockOfChain.getParent().id != block.getSurroundParent().id) {
       firstBlockOfChain = firstBlockOfChain.getParent();
     }
     
-    let inputName = block.getSurroundParent().getInputWithBlock(firstBlockOfChain).name
-    
-    return inputName;
+    if(block.getSurroundParent()) {
+      let inputName = block.getSurroundParent().getInputWithBlock(firstBlockOfChain).name
+      return inputName;
+    } else {
+      return null;
+    }
   }
 
   // Updates the block editor
