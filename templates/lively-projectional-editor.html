@@ -57,9 +57,38 @@
       width: 100%;
       height: 100%;
     }
+    
+    #popover {
+      display: none;
+      position: fixed;
+      z-index: 20;
+      width: 400px;
+      height: 200px;
+      box-shadow: 0 0 10px #777;
+      background-color: #272727;
+    }
+    
+    #popoverEditor {
+      width: 400px;
+      height: 160px;
+    }
+    
+    #popover > .buttonRow > div {
+      float: left;
+      padding: 5px;
+      border: 1px solid #666;
+      border-radius: 3px;
+      margin: 5px;
+      width: 178px;
+      text-align: center;
+      color: #ccc;
+      background-color: #444;
+      cursor: pointer;
+    }
+    
   </style>
   
-  <!-- Blockly does not correctly it's styles into a template, so we have to manually add them -->
+  <!-- Blockly does not correctly insert its styles into a template, so we have to manually add them -->
   <style>.blocklyDraggable {}
     .blocklySvg {
     background-color: #fff;
@@ -541,6 +570,14 @@
     <div class="maincontent">
       <juicy-ace-editor class="column1" id="textEditor" mode="ace/mode/javascript"></juicy-ace-editor>
       <div class="column2" id="blockEditor"></div>
+    </div>
+    
+    <div id="popover">
+      <juicy-ace-editor id="popoverEditor" mode="ace/mode/javascript" theme="ace/theme/tomorrow_night_eighties"></juicy-ace-editor>
+      <div class="buttonRow">
+        <div id="cancelButton">Cancel</div>
+        <div id="generateButton">Generate</div>
+      </div>
     </div>
   </div>
   

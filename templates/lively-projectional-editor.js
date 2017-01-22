@@ -28,6 +28,8 @@ export default class ProjectionalEditor extends Morph {
     // Get the views
     this.textEditor = this.query('#textEditor');
     this.blockEditor = this.query('#blockEditor');
+    this.popover = this.query('#popover');
+    this.popoverEditor = this.query('#popoverEditor');
     
     // Initialize the text editor
     this.initTextEditor();
@@ -151,18 +153,43 @@ export default class ProjectionalEditor extends Morph {
     
     
     // Add doubleclick listener to background for text entry
-    const background = this.query('.blocklyMainBackground');
-    background.addEventListener('dblclick', () => {
-      const code = window.prompt('Code:');
+    this.query('.blocklyMainBackground').addEventListener('dblclick', (event) => {
+      this.showPopover(event.x, event.y);
+    });
+    
+    this.query('#cancelButton').addEventListener('click', (event) => {
+      this.hidePopover();
+    });
+    
+    this.query('#generateButton').addEventListener('click', (event) => {
+      const code = this.popoverEditor.value;
       
       // Try to parse
       try {
         let partialAst = lpe_babel.babylon.parse(code, this.babylonOptions);
         let blocks = BabelTools.createBlocksForAST(partialAst.program.body[0], this.blockWorkspace);
+        this.hidePopover();
       } catch(e) {
         console.error('LPE: Could not transform text entry block');
       }
     });
+    
+  }
+  
+  
+  // Shows the popup
+  showPopover(x, y) {
+    this.popover.style.display = 'block';
+    this.popover.style.top = event.y + 'px';
+    this.popover.style.left = (event.x - 200) + 'px';
+    this.popoverEditor.editor.focus();
+  }
+  
+  
+  // Hides the popup
+  hidePopover() {
+    this.popoverEditor.editor.setValue('');
+    setTimeout(() => { this.popover.style.display = 'none'; }, 100);
   }
   
   
