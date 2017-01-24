@@ -168,10 +168,16 @@ export default class ProjectionalEditor extends Morph {
       try {
         let partialAst = lpe_babel.babylon.parse(code, this.babylonOptions);
         let prevBlock = null;
+        
+        // Create all the blocks
         for(var i = 0; i < partialAst.program.body.length; i++) {
           let block = BabelTools.createBlocksForAST(partialAst.program.body[i], this.blockWorkspace);
+          
+          // Connect the block to the previous block, or set its absolute position
           if(prevBlock) {
             BlocklyTools.setAsNext(block, prevBlock);
+          } else {
+            block.moveBy(400, 0);
           }
           prevBlock = block;
         }
