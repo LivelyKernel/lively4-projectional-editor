@@ -167,7 +167,14 @@ export default class ProjectionalEditor extends Morph {
       // Try to parse
       try {
         let partialAst = lpe_babel.babylon.parse(code, this.babylonOptions);
-        let blocks = BabelTools.createBlocksForAST(partialAst.program.body[0], this.blockWorkspace);
+        let prevBlock = null;
+        for(var i = 0; i < partialAst.program.body.length; i++) {
+          let block = BabelTools.createBlocksForAST(partialAst.program.body[i], this.blockWorkspace);
+          if(prevBlock) {
+            BlocklyTools.setAsNext(block, prevBlock);
+          }
+          prevBlock = block;
+        }
         this.hidePopover();
       } catch(e) {
         console.error('LPE: Could not transform text entry block');
@@ -511,12 +518,11 @@ export default class ProjectionalEditor extends Morph {
   
   // Gets the input name of the parent to which a block is (directly or indirectly) connected
   getParentInputNameOfBlock(block) {
-    let firstBlockOfChain = block;
-    while(firstBlockOfChain.getParent() && firstBlockOfChain.getParent().id != block.getSurroundParent().id) {
-      firstBlockOfChain = firstBlockOfChain.getParent();
-    }
-    
     if(block.getSurroundParent()) {
+      let firstBlockOfChain = block;
+      while(firstBlockOfChain.getParent() && firstBlockOfChain.getParent().id != block.getSurroundParent().id) {
+        firstBlockOfChain = firstBlockOfChain.getParent();
+      }
       let inputName = block.getSurroundParent().getInputWithBlock(firstBlockOfChain).name
       return inputName;
     } else {
