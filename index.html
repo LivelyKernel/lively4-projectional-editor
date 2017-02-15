@@ -3,10 +3,20 @@
 
 <h1>Lively Projectional Editor</h1>
 
-<p>Here you can find demos of the projectional editor:</p>
+<h2>Try it out</h2>
 
-<ul>
-  <li>
-    <a onclick="lively.openComponentInWindow('lively-projectional-editor')">Open empty Projectional Editor</a>
-  </li>
-</ul>
+<p><a onclick="lively.openComponentInWindow('lively-projectional-editor')">Click here to open a new Projectional Editor</a></p>
+
+<h2>Demo</h2>
+
+You can find a video demo <a href="https://youtu.be/c0T0ajQehLY">on YouTube</a>.
+
+<h2>About</h2>
+
+The Lively Projectional Editor component is in the <pre>templates</pre> folder of this repository. This component implements most of the functionality and is imported as soon as this page is opened.
+
+Some functionality, such as the parsing of Babel AST nodes into Blockly blocks is implemented in seperate files (<pre>babel_tools.js</pre> and <pre>blockly_tools.js</pre>) in the <pre>lib</pre> folder. This folder also contains compressed copies of Blockly and Babel 6, which are automatically loaded.
+
+<h2>Notes on Blockly</h2>
+
+The current version of Blockly has some problems when it is used in web components. The version included with this repository has been modified to prevent an (incorrect) error message after Blockly was loaded.
