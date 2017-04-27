@@ -23,7 +23,7 @@ export default class ProjectionalEditor extends Morph {
     };
     
     // Set default size
-    this.parentElement.setSize(800, 600);
+    this.parentElement.setExtent(800, 600);
     
     // Get the views
     this.textEditor = this.query('#textEditor');
